@@ -53,12 +53,12 @@ class AlertsService {
   
   async checkAndCreateAlert(commodity_id, region_id, price, average_price) {
     // get threshold
-    const thresholdQuery = 'SELECT waspada_percentage, kritis_percentage FROM commodity_thresholds WHERE commodity_id = ?';
+    const thresholdQuery = 'SELECT waspada_percentage, kritis_percentage, het_nominal FROM commodity_thresholds WHERE commodity_id = ?';
     const { rows } = await query(thresholdQuery, [commodity_id]);
     
     if (rows.length === 0 || !average_price) return null;
     
-    const { waspada_percentage, kritis_percentage } = rows[0];
+    const { waspada_percentage, kritis_percentage, het_nominal } = rows[0];
     const ratio = price / average_price;
     const waspadaThreshold = 1 + (parseFloat(waspada_percentage) / 100);
     const kritisThreshold = 1 + (parseFloat(kritis_percentage) / 100);
@@ -75,7 +75,12 @@ class AlertsService {
     const { rows: commodityRows } = await query(commodityQuery, [commodity_id]);
     const commodityName = commodityRows.length > 0 ? commodityRows[0].name : 'Komoditas';
 
-    if (ratio > kritisThreshold) {
+    // FIRST check if the price exceeds the national HET/HAP limit:
+    if (het_nominal !== null && het_nominal !== undefined && price > parseFloat(het_nominal)) {
+       type = 'critical';
+       title = `Peringatan Kritis Harga ${commodityName} (Melebihi HET/HAP)`;
+       message = `Harga ${commodityName} di wilayah ${regionName} sebesar Rp ${Math.round(price).toLocaleString('id-ID')} telah melebihi batas Harga Eceran Tertinggi (HET) / Harga Acuan Penjualan (HAP) nasional sebesar Rp ${Math.round(het_nominal).toLocaleString('id-ID')}.`;
+    } else if (ratio > kritisThreshold) {
        type = 'critical';
        title = `Peringatan Kritis Harga ${commodityName}`;
        message = `Harga ${commodityName} di wilayah ${regionName} telah melonjak ${((ratio - 1) * 100).toFixed(2)}% melebihi rata-rata, melampaui batas kritis ${kritis_percentage}%.`;

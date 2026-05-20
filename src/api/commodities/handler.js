@@ -27,6 +27,22 @@ import { clearCache } from '../../middleware/cache.js';
  *         unit:
  *           type: string
  *           example: kg
+ *     ThresholdInput:
+ *       type: object
+ *       required:
+ *         - waspada_percentage
+ *         - kritis_percentage
+ *       properties:
+ *         waspada_percentage:
+ *           type: number
+ *           example: 10.00
+ *         kritis_percentage:
+ *           type: number
+ *           example: 25.00
+ *         het_nominal:
+ *           type: number
+ *           nullable: true
+ *           example: 14000.00
  */
 
 class CommoditiesHandler {
@@ -148,6 +164,30 @@ class CommoditiesHandler {
     }
   }
 
+  /**
+   * @openapi
+   * /api/v1/commodities/{id}/threshold:
+   *   put:
+   *     summary: Perbarui batas ambang (threshold) komoditas
+   *     tags: [Commodities]
+   *     security:
+   *       - apiKeyAuth: []
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema: { type: string }
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/ThresholdInput'
+   *     responses:
+   *       200:
+   *         description: Batas ambang berhasil diperbarui
+   */
   async putThresholdHandler(req, res, next) {
     try {
       const { id } = req.params;

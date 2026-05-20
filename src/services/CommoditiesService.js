@@ -21,7 +21,7 @@ class CommoditiesService {
 
   async getCommodities() {
     const [rows] = await this._pool.query(`
-      SELECT c.*, ct.waspada_percentage, ct.kritis_percentage 
+      SELECT c.*, ct.waspada_percentage, ct.kritis_percentage, ct.het_nominal 
       FROM commodities c
       LEFT JOIN commodity_thresholds ct ON c.id = ct.commodity_id
       WHERE c.deleted_at IS NULL
@@ -90,20 +90,23 @@ class CommoditiesService {
     }
   }
 
-  async updateThreshold(commodityId, { waspada_percentage, kritis_percentage }, userId) {
+  async updateThreshold(commodityId, { waspada_percentage, kritis_percentage, het_nominal = null }, userId) {
     const query = `
-      INSERT INTO commodity_thresholds (id, commodity_id, waspada_percentage, kritis_percentage)
-      VALUES (?, ?, ?, ?)
-      ON DUPLICATE KEY UPDATE waspada_percentage = VALUES(waspada_percentage), kritis_percentage = VALUES(kritis_percentage)
+      INSERT INTO commodity_thresholds (id, commodity_id, waspada_percentage, kritis_percentage, het_nominal)
+      VALUES (?, ?, ?, ?, ?)
+      ON DUPLICATE KEY UPDATE 
+        waspada_percentage = VALUES(waspada_percentage), 
+        kritis_percentage = VALUES(kritis_percentage),
+        het_nominal = VALUES(het_nominal)
     `;
-    await this._pool.execute(query, [uuidv4(), commodityId, waspada_percentage, kritis_percentage]);
+    await this._pool.execute(query, [uuidv4(), commodityId, waspada_percentage, kritis_percentage, het_nominal]);
 
     if (this._logService && userId) {
       await this._logService.addLog({
         userId,
         action: 'UPDATE_THRESHOLD',
         targetId: commodityId,
-        details: { waspada_percentage, kritis_percentage }
+        details: { waspada_percentage, kritis_percentage, het_nominal }
       });
     }
   }

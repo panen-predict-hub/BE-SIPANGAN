@@ -116,7 +116,8 @@ class HistoryService {
           rp2.price as previous_price,
           ap.average_price,
           ct.waspada_percentage,
-          ct.kritis_percentage
+          ct.kritis_percentage,
+          ct.het_nominal
       FROM RankedPrices rp1
       LEFT JOIN RankedPrices rp2 ON rp1.commodity_id = rp2.commodity_id AND rp1.region_id = rp2.region_id AND rp2.rn = 2
       LEFT JOIN AveragePrices ap ON rp1.commodity_id = ap.commodity_id AND rp1.region_id = ap.region_id
@@ -168,7 +169,8 @@ class HistoryService {
         predictedPrice, 
         average, 
         row.waspada_percentage, 
-        row.kritis_percentage
+        row.kritis_percentage,
+        row.het_nominal
       );
       
       // Map to user-requested status: tanpa data, aman, waspada, kritis
@@ -193,11 +195,17 @@ class HistoryService {
     return result;
   }
 
-  _calculateStatus(current, predicted, average, waspadaPct = 10, kritisPct = 25) {
+  _calculateStatus(current, predicted, average, waspadaPct = 10, kritisPct = 25, hetNominal = null) {
     if (!average || isNaN(average) || average === 0 || isNaN(current) || current === 0) return 'tanpa data';
 
     const getLevel = (price, avg) => {
       if (price === null || price === undefined || isNaN(price) || price === 0) return -1; // Ignore if no data
+      
+      // Check nominal HET first
+      if (hetNominal !== null && hetNominal !== undefined && !isNaN(hetNominal) && hetNominal > 0) {
+        if (price > parseFloat(hetNominal)) return 3; // kritis
+      }
+
       const ratio = price / avg;
       
       const waspadaThreshold = 1 + (parseFloat(waspadaPct) / 100);

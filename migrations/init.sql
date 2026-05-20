@@ -56,6 +56,7 @@ CREATE TABLE commodity_thresholds (
     commodity_id VARCHAR(36) NOT NULL UNIQUE,
     waspada_percentage DECIMAL(5, 2) DEFAULT 10.00,
     kritis_percentage DECIMAL(5, 2) DEFAULT 25.00,
+    het_nominal DECIMAL(12, 2) DEFAULT NULL,
     FOREIGN KEY (commodity_id) REFERENCES commodities(id) ON DELETE CASCADE
 );
 
