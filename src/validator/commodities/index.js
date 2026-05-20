@@ -9,6 +9,7 @@ const CommodityPayloadSchema = Joi.object({
 const ThresholdPayloadSchema = Joi.object({
   waspada_percentage: Joi.number().min(0).max(100).required(),
   kritis_percentage: Joi.number().min(0).max(100).required(),
+  het_nominal: Joi.number().min(0).precision(2).allow(null).optional(),
 }).unknown(false);
 
 const CommoditiesValidator = {
