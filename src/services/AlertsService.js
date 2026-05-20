@@ -71,14 +71,18 @@ class AlertsService {
     const { rows: regionRows } = await query(regionQuery, [region_id]);
     const regionName = regionRows.length > 0 ? regionRows[0].name : 'Wilayah Tidak Diketahui';
 
+    const commodityQuery = 'SELECT name FROM commodities WHERE id = ?';
+    const { rows: commodityRows } = await query(commodityQuery, [commodity_id]);
+    const commodityName = commodityRows.length > 0 ? commodityRows[0].name : 'Komoditas';
+
     if (ratio > kritisThreshold) {
        type = 'critical';
-       title = 'Peringatan Kritis Harga Komoditas';
-       message = `Harga di wilayah ${regionName} telah melonjak ${((ratio - 1) * 100).toFixed(2)}% melebihi rata-rata, melampaui batas kritis ${kritis_percentage}%.`;
+       title = `Peringatan Kritis Harga ${commodityName}`;
+       message = `Harga ${commodityName} di wilayah ${regionName} telah melonjak ${((ratio - 1) * 100).toFixed(2)}% melebihi rata-rata, melampaui batas kritis ${kritis_percentage}%.`;
     } else if (ratio > waspadaThreshold) {
        type = 'warning';
-       title = 'Peringatan Waspada Harga Komoditas';
-       message = `Harga di wilayah ${regionName} mengalami kenaikan ${((ratio - 1) * 100).toFixed(2)}% melebihi rata-rata, melampaui batas waspada ${waspada_percentage}%.`;
+       title = `Peringatan Waspada Harga ${commodityName}`;
+       message = `Harga ${commodityName} di wilayah ${regionName} mengalami kenaikan ${((ratio - 1) * 100).toFixed(2)}% melebihi rata-rata, melampaui batas waspada ${waspada_percentage}%.`;
     } else {
        return null; // no alert needed
     }
