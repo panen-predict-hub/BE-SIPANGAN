@@ -16,6 +16,18 @@ import { clearCache } from '../../middleware/cache.js';
  *         unit:
  *           type: string
  *           example: kg
+ *         waspada_percentage:
+ *           type: number
+ *           nullable: true
+ *           example: 10.00
+ *         kritis_percentage:
+ *           type: number
+ *           nullable: true
+ *           example: 25.00
+ *         het_nominal:
+ *           type: number
+ *           nullable: true
+ *           example: 14000.00
  *     CommodityInput:
  *       type: object
  *       required:
