@@ -17,7 +17,7 @@ const importHistoricalData = async () => {
   console.log('Mulai proses import data history dari CSV...');
 
   try {
-    const filePath = path.resolve(process.cwd(), 'data/harga_pertanian_jawa_timur_clean.csv');
+    const filePath = path.resolve(process.cwd(), 'data/data_pertanian_jawa_timur_fe.csv');
     if (!fs.existsSync(filePath)) {
       console.error(`File CSV tidak ditemukan di path: ${filePath}`);
       process.exit(1);
@@ -70,8 +70,8 @@ const importHistoricalData = async () => {
 
       if (!line.trim()) continue;
 
-      // Header: nama_kabupaten_kota,periode_update,kategori,jumlah,satuan,jumlah_missing_awal
-      const [nama_kabupaten_kota, periode_update, kategori, jumlah, satuan, jumlah_missing_awal] = line.split(',');
+      // Header: series_id,nama_kabupaten_kota,periode_update,kategori,jumlah
+      const [series_id, nama_kabupaten_kota, periode_update, kategori, jumlah] = line.split(',');
 
       if (!nama_kabupaten_kota || !periode_update || !kategori || !jumlah) {
         continue;
@@ -105,7 +105,7 @@ const importHistoricalData = async () => {
       if (!commId) {
         commId = uuidv4();
         const formattedCommName = toTitleCase(rawCommName);
-        const unit = satuan && satuan.toLowerCase().includes('kg') ? 'kg' : 'kg';
+        const unit = 'kg';
 
         await connection.query('INSERT INTO commodities (id, name, unit) VALUES (?, ?, ?)', [
           commId,
