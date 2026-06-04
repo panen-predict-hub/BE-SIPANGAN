@@ -17,7 +17,7 @@ const importHistoricalData = async () => {
   console.log('Mulai proses import data history dari CSV...');
 
   try {
-    const filePath = path.resolve(process.cwd(), 'data/data_pertanian_jawa_timur_fe.csv');
+    const filePath = path.resolve(process.cwd(), 'data/data_final.csv');
     if (!fs.existsSync(filePath)) {
       console.error(`File CSV tidak ditemukan di path: ${filePath}`);
       process.exit(1);
