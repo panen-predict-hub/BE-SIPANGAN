@@ -4,6 +4,7 @@ import InvariantError from '../../utils/exceptions/InvariantError.js';
 const PredictQuerySchema = Joi.object({
   commodity: Joi.string().trim().max(100).required(),
   region: Joi.string().trim().max(100).required(),
+  force: Joi.string().valid('true', 'false').default('false'),
 }).unknown(false);
 
 const PredictValidator = {

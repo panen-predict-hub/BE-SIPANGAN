@@ -9,7 +9,7 @@ class PredictService {
     this._fastApiUrl = process.env.FASTAPI_URL || 'http://localhost:8000';
   }
 
-  async getPrediction(commodityName, regionName, commodityId = null, regionId = null) {
+  async getPrediction(commodityName, regionName, commodityId = null, regionId = null, force = false) {
     let currentCommodityId = commodityId;
     let currentRegionId = regionId;
 
@@ -57,8 +57,8 @@ class PredictService {
 
     const redisKey = `predict:${currentCommodityId}:${currentRegionId}:${targetMonthStr}`;
 
-    // 3. Try to check Redis Cache first
-    if (redisClient.isOpen) {
+    // 3. Try to check Redis Cache first (skip if force is true)
+    if (!force && redisClient.isOpen) {
       try {
         const cached = await redisClient.get(redisKey);
         if (cached) {
@@ -70,35 +70,37 @@ class PredictService {
       }
     }
 
-    // 4. Try to find prediction in DB for this target month
-    try {
-      const [rows] = await this._pool.query(
-        "SELECT price, prediction_date FROM predictions WHERE commodity_id = ? AND region_id = ? AND DATE_FORMAT(prediction_date, '%Y-%m') = ? LIMIT 1",
-        [currentCommodityId, currentRegionId, targetMonthStr]
-      );
+    // 4. Try to find prediction in DB for this target month (skip if force is true)
+    if (!force) {
+      try {
+        const [rows] = await this._pool.query(
+          "SELECT price, prediction_date FROM predictions WHERE commodity_id = ? AND region_id = ? AND DATE_FORMAT(prediction_date, '%Y-%m') = ? LIMIT 1",
+          [currentCommodityId, currentRegionId, targetMonthStr]
+        );
 
-      if (rows.length > 0) {
-        const result = {
-          status: 'success',
-          predictions: rows.map(r => ({
-            date: r.prediction_date instanceof Date ? r.prediction_date.toISOString().split('T')[0] : r.prediction_date,
-            price: parseFloat(r.price)
-          }))
-        };
+        if (rows.length > 0) {
+          const result = {
+            status: 'success',
+            predictions: rows.map(r => ({
+              date: r.prediction_date instanceof Date ? r.prediction_date.toISOString().split('T')[0] : r.prediction_date,
+              price: parseFloat(r.price)
+            }))
+          };
 
-        // Cache back to Redis to keep it in sync
-        if (redisClient.isOpen) {
-          try {
-            await redisClient.set(redisKey, JSON.stringify(result));
-          } catch (redisErr) {
-            console.error('Redis set error in PredictService:', redisErr);
+          // Cache back to Redis to keep it in sync
+          if (redisClient.isOpen) {
+            try {
+              await redisClient.set(redisKey, JSON.stringify(result));
+            } catch (redisErr) {
+              console.error('Redis set error in PredictService:', redisErr);
+            }
           }
-        }
 
-        return result;
+          return result;
+        }
+      } catch (dbError) {
+        console.error('Database error in PredictService while fetching prediction:', dbError);
       }
-    } catch (dbError) {
-      console.error('Database error in PredictService while fetching prediction:', dbError);
     }
 
     // 5. Fetch last 36 months of price history from DB for forecasting

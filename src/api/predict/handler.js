@@ -56,11 +56,12 @@ class PredictHandler {
    */
   async getPredictionHandler(req, res, next) {
     try {
-      const { commodity, region } = this._validator.validatePredictQuery(req.query);
+      const { commodity, region, force } = this._validator.validatePredictQuery(req.query);
+      const isForce = force === 'true';
       let data = null;
       
       try {
-        data = await this._service.getPrediction(commodity, region);
+        data = await this._service.getPrediction(commodity, region, null, null, isForce);
       } catch (err) {
         // Jika servis AI mati atau data tidak ada, jangan kirim error 500/503
         // Kirim saja data null agar frontend tidak crash
