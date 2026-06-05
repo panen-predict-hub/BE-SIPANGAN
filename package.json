@@ -8,6 +8,7 @@
     "dev": "nodemon src/server.js",
     "seed": "node migrations/seed.js",
     "import-data": "node migrations/import_historical_data.js",
+    "sync-alerts": "node migrations/sync_alerts.js",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "test:dev": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch"
   },
