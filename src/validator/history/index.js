@@ -7,7 +7,7 @@ const HistoryQuerySchema = Joi.object({
   start_date: Joi.date().iso().optional(),
   end_date: Joi.date().iso().optional(),
   page: Joi.number().integer().min(1).default(1),
-  limit: Joi.number().integer().min(1).max(200).default(20),
+  limit: Joi.number().integer().min(1).max(2000).default(20),
 }).unknown(false);
 
 const PricePayloadSchema = Joi.object({
