@@ -13,21 +13,28 @@ class PredictService {
   async getPrediction(commodityName, regionName, commodityId = null, regionId = null, force = false) {
     let currentCommodityId = commodityId;
     let currentRegionId = regionId;
+    let currentCommodityName = commodityName;
+    let currentRegionName = regionName;
 
-    // 1. Resolve IDs if they are not provided
-    if (!currentCommodityId || !currentRegionId) {
-      try {
-        const [commRows] = await this._pool.query('SELECT id FROM commodities WHERE name = ?', [commodityName]);
-        const [regRows] = await this._pool.query('SELECT id FROM regions WHERE name = ?', [regionName]);
+    // 1. Resolve IDs or Names if they are not fully provided
+    try {
+      if ((!currentCommodityId || !currentRegionId) && (currentCommodityName && currentRegionName)) {
+        const [commRows] = await this._pool.query('SELECT id FROM commodities WHERE name = ?', [currentCommodityName]);
+        const [regRows] = await this._pool.query('SELECT id FROM regions WHERE name = ?', [currentRegionName]);
         if (commRows.length > 0) currentCommodityId = commRows[0].id;
         if (regRows.length > 0) currentRegionId = regRows[0].id;
-      } catch (dbError) {
-        console.error('Failed to resolve IDs in PredictService:', dbError);
+      } else if ((!currentCommodityName || !currentRegionName) && (currentCommodityId && currentRegionId)) {
+        const [commRows] = await this._pool.query('SELECT name FROM commodities WHERE id = ?', [currentCommodityId]);
+        const [regRows] = await this._pool.query('SELECT name FROM regions WHERE id = ?', [currentRegionId]);
+        if (commRows.length > 0) currentCommodityName = commRows[0].name;
+        if (regRows.length > 0) currentRegionName = regRows[0].name;
       }
+    } catch (dbError) {
+      console.error('Failed to resolve IDs or Names in PredictService:', dbError);
     }
 
-    if (!currentCommodityId || !currentRegionId) {
-      console.warn(`Could not resolve IDs for commodity: ${commodityName}, region: ${regionName}`);
+    if (!currentCommodityId || !currentRegionId || !currentCommodityName || !currentRegionName) {
+      console.warn(`Could not resolve all details for commodity: ${currentCommodityName || currentCommodityId}, region: ${currentRegionName || currentRegionId}`);
       return {
         status: 'success',
         predictions: []
@@ -91,7 +98,7 @@ class PredictService {
           // Cache back to Redis to keep it in sync
           if (redisClient.isOpen) {
             try {
-              await redisClient.set(redisKey, JSON.stringify(result));
+              await redisClient.set(redisKey, JSON.stringify(result), { EX: 86400 * 30 });
             } catch (redisErr) {
               console.error('Redis set error in PredictService:', redisErr);
             }
@@ -116,7 +123,7 @@ class PredictService {
       );
 
       if (historyRows.length < 36) {
-        console.warn(`History data for ${commodityName} in ${regionName} is less than 36 months (${historyRows.length} found).`);
+        console.warn(`History data for ${currentCommodityName} in ${currentRegionName} is less than 36 months (${historyRows.length} found).`);
         return {
           status: 'success',
           predictions: []
@@ -140,8 +147,8 @@ class PredictService {
         },
         body: JSON.stringify({
           history: historyPrices,
-          kabupaten: regionName,
-          komoditas: commodityName
+          kabupaten: currentRegionName,
+          komoditas: currentCommodityName
         })
       });
 
@@ -177,7 +184,7 @@ class PredictService {
       // 8. Cache to Redis
       if (redisClient.isOpen) {
         try {
-          await redisClient.set(redisKey, JSON.stringify(result));
+          await redisClient.set(redisKey, JSON.stringify(result), { EX: 86400 * 30 });
         } catch (redisErr) {
           console.error('Redis set error in PredictService:', redisErr);
         }

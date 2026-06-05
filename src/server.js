@@ -23,6 +23,7 @@ import UserService from './services/UserService.js';
 import AuthService from './services/AuthService.js';
 import LogService from './services/LogService.js';
 import WeatherService from './services/WeatherService.js';
+import PredictionScheduler from './services/PredictionScheduler.js';
 
 // Validators
 import AuthValidator from './validator/auth/index.js';
@@ -92,6 +93,10 @@ const commoditiesService = new CommoditiesService(logService);
 const userService = new UserService();
 const authService = new AuthService(userService);
 const weatherService = new WeatherService();
+
+// Start background prediction scheduler
+const predictionScheduler = new PredictionScheduler(predictService);
+predictionScheduler.start();
 
 // Register API Routes (consistent plugin pattern)
 HistoryAPI.register(app, { historyService });

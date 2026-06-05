@@ -261,6 +261,13 @@ class HistoryService {
       }
     }
     
+    // Trigger prediction recalculation in background
+    if (this._predictService) {
+      this._predictService.getPrediction(null, null, commodity_id, region_id, true)
+        .then(() => console.log(`Auto-recalculated prediction for commodity ${commodity_id} in region ${region_id}`))
+        .catch(err => console.error(`Failed to auto-recalculate prediction for commodity ${commodity_id} in region ${region_id}:`, err.message));
+    }
+    
     return id;
   }
 
@@ -295,6 +302,13 @@ class HistoryService {
       } catch (error) {
         console.error('Failed to process alert:', error);
       }
+    }
+
+    // Trigger prediction recalculation in background
+    if (this._predictService) {
+      this._predictService.getPrediction(null, null, commodity_id, region_id, true)
+        .then(() => console.log(`Auto-recalculated prediction for commodity ${commodity_id} in region ${region_id} on update`))
+        .catch(err => console.error(`Failed to auto-recalculate prediction for commodity ${commodity_id} in region ${region_id} on update:`, err.message));
     }
   }
 
