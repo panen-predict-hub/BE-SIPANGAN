@@ -6,7 +6,8 @@ import ServiceUnavailableError from '../utils/exceptions/ServiceUnavailableError
 class PredictService {
   constructor() {
     this._pool = pool;
-    this._fastApiUrl = process.env.FASTAPI_URL || 'http://localhost:8000';
+    const rawUrl = process.env.FASTAPI_URL || 'http://localhost:8000';
+    this._fastApiUrl = rawUrl.endsWith('/') ? rawUrl.slice(0, -1) : rawUrl;
   }
 
   async getPrediction(commodityName, regionName, commodityId = null, regionId = null, force = false) {
